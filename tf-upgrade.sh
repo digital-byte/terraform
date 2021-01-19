@@ -16,6 +16,17 @@ echo "Your current version is ${current_version}"
 select opt in "${options[@]}" "Quit" ; do
   if (( REPLY == 1 + ${#options[@]} )) ; then
     exit
+    elif [ ! -f "${bin}" ]; then
+    echo "Installing Terraform v${latest_version}"
+    latest_version=( $(curl -sL https://releases.hashicorp.com/terraform/index.json \
+                    | jq -r '.versions[].builds[].url' | sort -V | egrep -v 'rc|alpha|beta' \
+                    | egrep 'linux.*amd64' | tail -n1 | grep terraform \
+                    | cut -d '_' -f 2 | cut -d '<' -f 1) )
+    cd /tmp && \
+    /bin/wget -q ${url}/${latest_version}/terraform_${latest_version}_linux_amd64.zip && \
+    /bin/unzip -qq terraform_${latest_version}_linux_amd64.zip
+    sudo cp terraform ${bin}
+    exit
   elif (( REPLY > 0 && REPLY <= ${#options[@]} )) ; then
     echo "Select a version higher than your current version."
     if [ "${current_version}" = "`echo -e "${current_version}\n${opt}" | sort -V | head -n1`" ]; then
